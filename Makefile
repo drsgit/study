@@ -4,3 +4,5 @@ PWD := $(shell pwd)
 
 modules:
 	make -C $(KERNEL_DIR) M=$(PWD) modules
+clean:
+	rm *.ko *.o *.mod.c modules.order Module.symvers
