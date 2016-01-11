@@ -17,6 +17,7 @@ struct globalmem_dev
 {
 	struct cdev cdev;
 	unsigned char mem[GLOBALMEM_SIZE];
+	struct mutex mutex;
 };
 
 struct globalmem_dev *globalmem_devp;
@@ -42,7 +43,9 @@ static long globalmem_ioctl(struct file *filp, unsigned int cmd, unsigned long a
 	switch (cmd)
 	{
 		case MEM_CLEAR:
+			mutex_lock(&dev->mutex);
 			memset(dev->mem, 0, GLOBALMEM_SIZE);
+			mutex_unlock(&dev->mutex);
 
 			printk(KERN_INFO "globalmem is set to zero\n");
 			break;
@@ -65,6 +68,7 @@ static ssize_t globalmem_read(struct file *filp, char __user *buf, size_t size, 
 	if (count > GLOBALMEM_SIZE - p)
 		count = GLOBALMEM_SIZE - p;
 
+	mutex_lock(&dev->mutex);
 
 	if (copy_to_user(buf, dev->mem+p, count))
 	{
@@ -77,6 +81,7 @@ static ssize_t globalmem_read(struct file *filp, char __user *buf, size_t size, 
 		printk(KERN_INFO "read %u bytes(s) from %lu\n", count, p);
 	}
 	
+	mutex_unlock(&dev->mutex);
 
 	return ret;
 }
@@ -93,6 +98,7 @@ static ssize_t globalmem_write(struct file *filp, const char __user *buf, size_t
 	if (count > GLOBALMEM_SIZE - p)
 		count = GLOBALMEM_SIZE - p;
 
+	mutex_lock(&dev->mutex);
 
 	if (copy_from_user(dev->mem + p, buf, count))
 	{
@@ -105,6 +111,7 @@ static ssize_t globalmem_write(struct file *filp, const char __user *buf, size_t
 		printk(KERN_INFO "written %u bytes from %lu\n", count, p);
 	}
 
+	mutex_unlock(&dev->mutex);
 
 	return ret;
 }
