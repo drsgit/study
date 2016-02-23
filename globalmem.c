@@ -211,6 +211,7 @@ static int __init globalmem_init(void)
 	{
 		globalmem_setup_cdev(globalmem_devp + i, i);
 	}
+	mutex_init(&globalmem_devp->mutex);
 	return 0;
 
 	fail_malloc:
